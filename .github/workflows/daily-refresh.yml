@@ -1,0 +1,30 @@
+name: Daily refresh
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 02:00 UTC every day (10:00 China time)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node refresh.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet domains.json; then
+            echo "no upstream changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add domains.json
+          git commit -m "chore: daily refresh from upstream"
+          git push
