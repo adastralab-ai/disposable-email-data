@@ -100,7 +100,9 @@ Append candidates to the project's blocklist file in alphabetical order. Do NOT 
 
 **All changes go through a PR. Never commit or push directly to `main`** — even a "trivial" `domains.json` refresh. Always work on a dedicated branch and let review happen on GitHub.
 
-Branch name: `<user-prefix>-disposable-update-<YYYY-MM-DD>`. Skip if branch already exists.
+**Each run = its own new PR.** Don't pile a follow-up run onto an open earlier PR — branch off the latest `main` so the reviewer can merge runs independently and so partial merges (rebase / squash that drops a tail commit) don't silently lose later runs' candidates.
+
+Branch name: `<user-prefix>-disposable-update-<YYYY-MM-DD>-<HHMM>` (UTC). The `HHMM` suffix differentiates multiple same-day runs. If a branch with the same minute somehow already exists, append `-2`, `-3`, etc.
 
 Three possible outcomes:
 
@@ -134,7 +136,9 @@ Open as **draft**. Tag the invoker as reviewer.
 
 ## Idempotence
 
-If today's branch already exists, abort silently. Do not push duplicate force-updates.
+Each run targets a unique `<YYYY-MM-DD>-<HHMM>` branch, so collisions are rare in practice. If a branch with the exact same minute already exists, append `-2`/`-3`/... rather than force-updating it. Never force-push over someone else's commits.
+
+Re-running within the same minute when nothing changed (no upstream diff, no new candidates) should still log `nothing to do` and exit without opening a second PR.
 
 ## Safety
 
