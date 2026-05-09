@@ -26,7 +26,7 @@ If a sibling project skill / `AGENTS.md` already pins these, read from there. Ot
 
 ## Inputs
 
-- Time window (default `24 hours`) — only inspect users created within this window.
+- Time window (default `12 hours`) — only inspect users created within this window.
 - Minimum suspicious-signup count per domain to flag as a candidate (default `2`).
 
 ## Pipeline
