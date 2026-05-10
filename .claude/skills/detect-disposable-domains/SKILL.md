@@ -31,11 +31,16 @@ If a sibling project skill / `AGENTS.md` already pins these, read from there. Ot
 
 ## Pipeline
 
-### 1. Refresh the OSS list
+### 1. Decide mode: `refresh+analysis` vs `analysis-only`
 
-Run the project's refresh script (e.g. `node refresh.mjs`). If the resulting `domains.json` diff is non-empty, that's already a meaningful daily update — usually it covers most or all of the recent abuse.
+For this repository (`adastralab-ai/disposable-email-data`), run in **analysis-only** mode.
 
-If a diff exists, prepare to commit it on the daily branch (whether or not the rest of the pipeline finds anything to add to `custom.ts`).
+- Do **not** run refresh scripts.
+- Do **not** fetch/pull upstream list sources for this task.
+- Treat current `domains.json` as read-only input for filtering.
+- Only open a PR if residual domains should be added to `custom.json`.
+
+General rule: if a repo has scheduled automation that already refreshes upstream vendored lists, this skill should stay analysis-only for manual/cron runs.
 
 ### 2. Pull recent signups
 
@@ -56,6 +61,7 @@ Drop rows whose domain is:
 
 - In the freshly-refreshed OSS disposable list (`domains.json`). Most candidates die here after step 1.
 - In the project's manually-curated `custom.ts`/`custom.json`.
+- In the project hard-exclusion allowlist (`slam.colegia.org` must always be excluded from promotion/blocking).
 - A well-known mainstream provider: `gmail.com`, `googlemail.com`, `outlook.com`, `hotmail.com`, `live.com`, `yahoo.com`, `icloud.com`, `me.com`, `mac.com`, `proton.me`, `protonmail.com`, `tutanota.com`, `zoho.com`, `aol.com`, `qq.com`, `163.com`, `126.com`, `sina.com`, `foxmail.com`.
 - The internal company domain.
 
@@ -106,11 +112,11 @@ Branch name: `<user-prefix>-disposable-update-<YYYY-MM-DD>-<HHMM>` (UTC). The `H
 
 Three possible outcomes:
 
-| Step 1 diff | Step 6 candidates | Action |
+| Mode | Step 6 candidates | Action |
 |---|---|---|
-| empty | empty | Log `nothing to do` and exit. No branch, no PR. |
-| non-empty | empty | One commit: refreshed `domains.json`. Open draft PR titled `chore: refresh disposable-email/domains.json`. |
-| any | non-empty | Two commits (refresh first, then `custom.ts` additions). Open draft PR titled `feat: update disposable-email blocklist`. Body lists the residual candidates and their signals. |
+| analysis-only | empty | Log `nothing to do` and exit. No branch, no PR. |
+| analysis-only | non-empty | One commit: `custom.json` additions only. Open draft PR titled `feat: update disposable-email blocklist`. |
+| refresh+analysis (only for repos without auto-refresh) | depends | Follow the regular refresh + custom update flow. |
 
 PR body for the third case:
 
@@ -143,7 +149,8 @@ Re-running within the same minute when nothing changed (no upstream diff, no new
 ## Safety
 
 - Never commit or push directly to `main`. Every change — refresh diff, `custom` additions — must land on a daily branch and go through a draft PR.
-- Never edit the OSS-mirrored list directly; only via the project's refresh script.
+- In analysis-only mode, never modify `domains.json`.
+- Never edit the OSS-mirrored list directly; only via the project's refresh script (refresh+analysis repos only).
 - Never auto-merge.
 - Never bypass the mainstream-provider allowlist — false positives there block real users.
 - DB query is `SELECT` only. Never write to the production DB from this skill.
