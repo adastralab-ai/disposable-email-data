@@ -9,6 +9,7 @@ const SOURCE =
 
 const here = dirname(fileURLToPath(import.meta.url));
 const customPath = join(here, "custom.json");
+const whitelistPath = join(here, "whitelist.json");
 const dest = join(here, "domains.json");
 
 const res = await fetch(SOURCE);
@@ -26,10 +27,18 @@ const custom = JSON.parse(readFileSync(customPath, "utf8")).map((d) =>
   String(d).trim().toLowerCase(),
 );
 
-const merged = [...new Set([...upstream, ...custom])].sort();
+const whitelist = new Set(
+  JSON.parse(readFileSync(whitelistPath, "utf8")).map((entry) =>
+    String(entry.domain).trim().toLowerCase(),
+  ),
+);
+
+const beforeWhitelist = new Set([...upstream, ...custom]);
+const removedByWhitelist = [...whitelist].filter((d) => beforeWhitelist.has(d));
+const merged = [...beforeWhitelist].filter((d) => !whitelist.has(d)).sort();
 
 writeFileSync(dest, `${JSON.stringify(merged, null, 2)}\n`);
 
 console.log(
-  `wrote ${merged.length} domains (upstream ${upstream.length} + custom ${custom.length}) → ${dest}`,
+  `wrote ${merged.length} domains (upstream ${upstream.length} + custom ${custom.length}, ${removedByWhitelist.length} removed by whitelist) → ${dest}`,
 );

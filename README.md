@@ -4,10 +4,11 @@ Daily-refreshed disposable-email domain list, served from this repo's raw URL fo
 
 ## Sources
 
-[`refresh.mjs`](./refresh.mjs) merges two inputs into [`domains.json`](./domains.json):
+[`refresh.mjs`](./refresh.mjs) combines three inputs into [`domains.json`](./domains.json):
 
 1. **Upstream OSS aggregator** — [`disposable/disposable-email-domains`](https://github.com/disposable/disposable-email-domains) `domains.txt` (which itself pulls from `7c/fakefilter`, `martenson/disposable-email-domains`, and friends).
-2. **`custom.json`** — manually-curated additions for abuse domains we've spotted in production before upstream catches up. Edit this file directly; the next refresh preserves entries here.
+2. **`custom.json`** — manually-curated **additions** for abuse domains we've spotted in production before upstream catches up.
+3. **`whitelist.json`** — manually-curated **subtractions** for mainstream providers we never want blocked, even if upstream picks them up by mistake. Whitelist wins over upstream and `custom.json`.
 
 The output is sorted, deduped, lowercase.
 
@@ -30,3 +31,17 @@ Cache in your service (e.g. 6h TTL with stale fallback on fetch failure). The fi
 ```
 
 Commit. The next refresh run merges your entry into `domains.json`. If you'd rather not wait, run `node refresh.mjs` locally + commit both files.
+
+## Whitelisting a domain
+
+If upstream ever mis-flags a real mainstream provider, add it to `whitelist.json` and re-run refresh — it will be stripped out of `domains.json` regardless of whether upstream or `custom.json` lists it.
+
+Each entry pairs the domain with a one-line reason — `refresh.mjs` only consumes `.domain`, but the `.reason` field is mandatory so anyone reviewing the list later understands why an entry is there.
+
+```jsonc
+// whitelist.json
+[
+  { "domain": "gmail.com",    "reason": "Google Gmail — global mainstream" },
+  { "domain": "outlook.com",  "reason": "Microsoft Outlook — current global mainstream" }
+]
+```
